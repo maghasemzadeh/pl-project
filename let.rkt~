@@ -1,0 +1,74 @@
+#lang racket
+
+(require (lib "eopl.ss" "eopl"))
+
+
+; -------------------------------------------------------------------- values
+
+(define-datatype expval expval?
+  (bool-val (bool boolean?))
+  (num-val (num number?))
+  )
+
+(define expval->bool
+  (lambda (val)
+    (cases expval val
+      (bool-val (bool) bool)
+      (else (print 'not-a-boolean))
+      )
+    )
+  )
+
+(define expval->num
+  (lambda (val)
+    (cases expval val
+      (num-val (num) num)
+      (else (print 'not-a-number))
+      )
+    )
+  )
+
+
+; -------------------------------------------------------------------- expressions
+
+(define-datatype program program?
+  (prog (exp expression?))
+  )
+
+(define-datatype expression expression?
+  (const-exp (num number?))
+  (diff-exp (exp1 expression?)
+            (exp2 expression?))
+  (zero?-exp (exp expression?))
+  (if-exp (condition expression?)
+          (exp1 expression?)
+          (exp2 expression?))
+  (var-exp (var identifier?))
+  (let-exp (var identifier?)
+           (exp expression?)
+           (body expression?))
+  )
+
+
+(define run-program
+  (lambda (pprog)
+    (cases program pprog)
+    (prog (pprog) (value-of pprog))
+    (else 'not-a-program)
+    )
+  )
+
+
+; -------------------------------------------------------------------- value-of
+
+(define value-of
+  (lambda (my-exp env)
+    (cases expression my-exp
+      (const-exp (const) (num-val const))
+      (else (print 'not-implemented))
+      )
+    )
+  )
+
+
+
