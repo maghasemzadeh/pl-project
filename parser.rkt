@@ -1,9 +1,10 @@
 #lang racket
 
-
+(require (lib "eopl.ss" "eopl"))
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          parser-tools/yacc)
+
 
 (define simple-math-lexer
            (lexer
@@ -58,6 +59,71 @@
     s-pow s-plus-assign s-minus-assign s-mult-assign s-div-assign s-pow-assign s-open-brac s-close-brac a-true a-false a-none
     ))
 
+(define-datatype parser-exp parser-exp?
+  (kw-pass-exp)
+  (kw-break-exp)
+  (kw-continue-exp)
+  (assingment-exp (id identifier?)
+                  (exp parser-exp?))
+  (kw-return-exp)
+  (return-exp)
+  (global-exp (id identifier?))
+  (def-exp (id identifier?)
+    (exp1 parser-exp?)
+    (exp2 parser-exp?))
+  (empty-def-exp (id identifier?)
+                 (exp1 parser-exp?)
+                 (exp2 parser-exp?))
+  (param-comma-exp (exp1 parser-exp?)
+                   (exp2 parser-exp?))
+  (assign-exp (id identifier?)
+              (exp1 parser-exp?))
+  (if-exp (exp1 parser-exp?)
+          (exp2 parser-exp?))
+  (else-exp (exp1 parser-exp?))
+  (for-exp (id identifier?)
+           (exp1 parser-exp?)
+           (exp2 parser-exp?))
+  (or-exp (exp1 parser-exp?)
+          (exp2 parser-exp?))
+  (and-exp (exp1 parser-exp?)
+           (exp2 parser-exp?))
+  (not-exp (exp1 parser-exp?))
+  (sum-compare-exp (exp1 parser-exp?)
+                   (exp2 parser-exp?))
+  (multi-compare-exp (exp1 parser-exp?))
+  (eq-exp (exp1 parser-exp?))
+  (lt-exp (exp1 parser-exp?))
+  (gt-exp (exp1 parser-exp?))
+  (sum-exp (num1 number?)
+           (num2 number?))
+  (minus-exp (num1 number?)
+             (num2 number?))
+  (mul-exp (num1 number?)
+           (num2 number?))
+  (div-exp (num1 number?)
+           (num2 number?))
+  (pos-num-exp (num number?))
+  (pow-exp (num1 number?)
+           (num2 number?))
+  (array-peak-exp (exp1 parser-exp?)
+                  (exp2 parser-exp?))
+  (call-exp (exp1 parser-exp?))
+  (call-arg-exp (exp1 parser-exp?)
+                (exp2 parser-exp?))
+  (arg-exp-exp (exp1 parser-exp?)
+               (exp2 parser-exp?))
+  (id-exp (id identifier?))
+  (bool-exp (bool boolean?))
+  (none-exp)
+  (num-exp (num number?))
+  (bracket-exp (exp1 parser-exp?))
+  (empty-bracket-exp)
+  (comma-exp (exp1 parser-exp?)
+             (exp2 parser-exp?))
+  (neg-num-exp (exp1 parser-exp?))
+  )
+
 (define simple-math-parser
     (parser
         (start statements)
@@ -100,15 +166,15 @@
                 )
                 (
                     (kw-pass)
-                    ('kw-pass)
+                    (kw-pass-exp)
                 )
                 (
                     (kw-break)
-                    ('kw-pass)
+                    (kw-break-exp)
                 )
                 (
                     (kw-continue)
-                    ('kw-continue)
+                    (kw-continue-exp)
                 )
             )
                 (compound-stmt
@@ -128,67 +194,67 @@
             (assignment
                 (
                     (identifier s-assign expression)
-                    (list 'assingment $1 $3)
+                    (assingment-exp $1 $3)
                 )
             )
             (return-stmt
                 (
                     (kw-return)
-                    'f
+                    (kw-return-exp)
                 )
                 (
                     (kw-return expression)
-                    'f
+                    (return-exp)
                 )
             )
             (global-stmt
                 (
                     (kw-global identifier)
-                    'f
+                    (global-exp $2)
                 )
             )
             (function-def
                 (
                     (kw-def identifier s-open-par params s-close-par s-colon statements)
-                    'f
+                    (def-exp $2 $4 $7)
                 )
                 (
                     (kw-def identifier s-open-par s-close-par s-colon statements)
-                    'f
+                    (empty-def-exp $2 $6)
                 )
             )
             (params
                 (
                     (param-with-default)
-                    'f
+                    $1
                 )
                 (
                     (params s-comma param-with-default)
-                    'f
+                    (param-comma-exp $1 $3)
                 )
             )
             (param-with-default
                 (
                     (identifier s-assign expression)
-                    'f
+                    (assign-exp $1 $3)
                 )
             )
             (if-stmt
                 (
                     (kw-if expression s-colon statements else-block)
-                    'f
+                    (if-exp $2 $4)
                 )
             )
             (else-block
                 (
                     (kw-else s-colon statements)
-                    'f
+                    (else-exp $3)
                 )
             )
             (for-stmt
                 (
                     (kw-for identifier kw-in expression s-colon statements)
-                    'f
+                    (for-exp $2 $4 $6)
                 )
             )
             (expression
@@ -204,7 +270,7 @@
                 )
                 (
                     (disjunction kw-or conjunction)
-                    'f
+                    (or-exp $1 $3)
                 )
             )
             (conjunction
@@ -214,13 +280,13 @@
                 )
                 (
                     (conjunction kw-and inversion)
-                    'f
+                    (and-exp $1 $3)
                 )
             )
             (inversion
                 (
                     (kw-not inversion)
-                    'f
+                    (not-exp $2)
                 )
                 (
                     (comparison)
@@ -230,7 +296,7 @@
             (comparison
                 (
                     (sum compare-op-sum-pairs)
-                    'f
+                    (sum-compare-exp $1 $2)
                 )
                 (
                     (sum)
@@ -240,53 +306,53 @@
             (compare-op-sum-pairs
                 (
                     (compare-op-sum-pair)
-                    'f
+                    $1
                 )
                 (
                     (compare-op-sum-pairs compare-op-sum-pair)
-                    'f
+                    (multi-compare-exp $2)
                 )
             )
             (compare-op-sum-pair
                 (
                     (eq-sum)
-                    'f
+                    $1
                 )
                 (
                     (lt-sum)
-                    'f
+                    $1
                 )
                 (
                     (gt-sum)
-                    'f
+                    $1
                 )
             )
             (eq-sum
                 (
                     (s-eq sum)
-                    'f
+                    (eq-exp $2)
                 )
             )
             (lt-sum
                 (
                     (s-lt sum)
-                    'f
+                    (lt-exp $2)
                 )
             )
             (gt-sum
                 (
                     (s-gt sum)
-                    'f
+                    (gt-exp $2)
                 )
             )
             (sum
                 (
                     (sum s-plus term)
-                    (list 'sum $1 $3)
+                    (sum-exp $1 $3)
                 )
                 (
                     (sum s-minus term)
-                    (list 'minus $1 $3)
+                    (minus-exp $1 $3)
                 )
                 (
                     (term)
@@ -296,11 +362,11 @@
             (term
                 (
                     (term s-mult factor)
-                    'f
+                    (mul-exp $1 $3)
                 )
                 (
                     (term s-div factor)
-                    'f
+                    (div-exp $1 $3)
                 )
                 (
                     (factor)
@@ -310,11 +376,11 @@
             (factor
                 (
                     (s-plus factor)
-                    'f
+                    (pos-num-exp $2)
                 )
                 (
                     (s-minus factor)
-                    'f
+                    (neg-num-exp $2)
                 )
                 (
                     (power)
@@ -324,7 +390,7 @@
             (power
                 (
                     (atom s-pow factor)
-                    'f
+                    (pow-exp $1 $3)
                 )
                 (
                     (primary)
@@ -338,71 +404,71 @@
                 )
                 (
                     (primary s-open-brac expression s-close-brac)
-                    'f
+                    (array-peak-exp $1 $3)
                 )
                 (
                     (primary s-open-par s-close-par)
-                    'f
+                    (call-exp $1)
                 )
                 (
                     (primary s-open-par arguments s-close-par)
-                    'f
+                    (call-arg-exp $1 $3)
                 )
             )
             (arguments
                 (
                     (expression)
-                    'f
+                    $1
                 )
                 (
                     (arguments s-comma expression)
-                    'f
+                    (arg-exp-exp $1 $3)
                 )
             )
             (atom
                 (
                     (identifier)
-                    (list 'identifier $1)
+                    (id-exp $1)
                 )
                 (
                     (a-true)
-                    'f
+                    (bool-exp $1)
                 )
                 (
                     (a-false)
-                    'f
+                    (bool-exp $1)
                 )
                 (
                     (a-none)
-                    'f
+                    (none-exp)
                 )
                 (
                     (a-number)
-                    (list 'num $1)
+                    (num-exp $1)
                 )
                 (
                     (List)
-                    'f
+                    $1
                 )
             )
             (List
                 (
                     (s-open-brac expressions s-close-brac)
-                    'f
+                    (bracket-exp $2)
                 )
                 (
                     (s-open-brac s-close-brac)
-                    'f
+                    (empty-bracket-exp)
                 )
             )
             (expressions
                 (
                     (expressions s-comma expression)
-                    'f
+                    (comma-exp $1 $3)
                 )
                 (
                     (expression)
-                    'f
+                    $1
                 )
             )
         )
