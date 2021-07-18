@@ -68,7 +68,7 @@
             (statements
                 (
                     (statement s-semicolon)
-                    ($1)
+                    $1
                 )
                 (
                     (statements statement s-semicolon)
@@ -78,25 +78,25 @@
             (statement
                 (
                     (compound-stmt)
-                    ($1)
+                    $1
                 )
                 (
                     (simple-stmt)
-                    ($1)
+                    $1
                 )
             )
             (simple-stmt
                 (
                     (assignment)
-                    ($1)
+                    $1
                 )
                 (
                     (return-stmt)
-                    ($1)
+                    $1
                 )
                 (
                     (global-stmt)
-                    ($1)
+                    $1
                 )
                 (
                     (kw-pass)
@@ -114,15 +114,15 @@
                 (compound-stmt
                 (
                     (function-def)
-                    ($1)
+                    $1
                 )
                 (
                     (if-stmt)
-                    ($1)
+                    $1
                 )
                 (
                     (for-stmt)
-                    ($1)
+                    $1
                 )
              )
             (assignment
@@ -134,149 +134,149 @@
             (return-stmt
                 (
                     (kw-return)
-                    ('f)
+                    'f
                 )
                 (
                     (kw-return expression)
-                    ('f)
+                    'f
                 )
             )
             (global-stmt
                 (
                     (kw-global identifier)
-                    ('f)
+                    'f
                 )
             )
             (function-def
                 (
                     (kw-def identifier s-open-par params s-close-par s-colon statements)
-                    ('f)
+                    'f
                 )
                 (
                     (kw-def identifier s-open-par s-close-par s-colon statements)
-                    ('f)
+                    'f
                 )
             )
             (params
                 (
                     (param-with-default)
-                    ('f)
+                    'f
                 )
                 (
                     (params s-comma param-with-default)
-                    ('f)
+                    'f
                 )
             )
             (param-with-default
                 (
                     (identifier s-assign expression)
-                    ('f)
+                    'f
                 )
             )
             (if-stmt
                 (
                     (kw-if expression s-colon statements else-block)
-                    ('f)
+                    'f
                 )
             )
             (else-block
                 (
                     (kw-else s-colon statements)
-                    ('f)
+                    'f
                 )
             )
             (for-stmt
                 (
                     (kw-for identifier kw-in expression s-colon statements)
-                    ('f)
+                    'f
                 )
             )
             (expression
                 (
                     (disjunction)
-                    ($1)
+                    $1
                 )
             )
             (disjunction
                 (
                     (conjunction)
-                    ($1)
+                    $1
                 )
                 (
                     (disjunction kw-or conjunction)
-                    ('f)
+                    'f
                 )
             )
             (conjunction
                 (
                     (inversion)
-                    ($1)
+                    $1
                 )
                 (
                     (conjunction kw-and inversion)
-                    ('f)
+                    'f
                 )
             )
             (inversion
                 (
                     (kw-not inversion)
-                    ('f)
+                    'f
                 )
                 (
                     (comparison)
-                    ($1)
+                    $1
                 )
             )
             (comparison
                 (
                     (sum compare-op-sum-pairs)
-                    ('f)
+                    'f
                 )
                 (
                     (sum)
-                    ($1)
+                    $1
                 )
             )
             (compare-op-sum-pairs
                 (
                     (compare-op-sum-pair)
-                    ('f)
+                    'f
                 )
                 (
                     (compare-op-sum-pairs compare-op-sum-pair)
-                    ('f)
+                    'f
                 )
             )
             (compare-op-sum-pair
                 (
                     (eq-sum)
-                    ('f)
+                    'f
                 )
                 (
                     (lt-sum)
-                    ('f)
+                    'f
                 )
                 (
                     (gt-sum)
-                    ('f)
+                    'f
                 )
             )
             (eq-sum
                 (
                     (s-eq sum)
-                    ('f)
+                    'f
                 )
             )
             (lt-sum
                 (
                     (s-lt sum)
-                    ('f)
+                    'f
                 )
             )
             (gt-sum
                 (
                     (s-gt sum)
-                    ('f)
+                    'f
                 )
             )
             (sum
@@ -290,73 +290,73 @@
                 )
                 (
                     (term)
-                    ($1)
+                    $1
                 )
             )
             (term
                 (
                     (term s-mult factor)
-                    ('f)
+                    'f
                 )
                 (
                     (term s-div factor)
-                    ('f)
+                    'f
                 )
                 (
                     (factor)
-                    ($1)
+                    $1
                 )
             )
             (factor
                 (
                     (s-plus factor)
-                    ('f)
+                    'f
                 )
                 (
                     (s-minus factor)
-                    ('f)
+                    'f
                 )
                 (
                     (power)
-                    ($1)
+                    $1
                 )
             )
             (power
                 (
                     (atom s-pow factor)
-                    ('f)
+                    'f
                 )
                 (
                     (primary)
-                    ($1)
+                    $1
                 )
             )
             (primary
                 (
                     (atom)
-                    ($1)
+                    $1
                 )
                 (
                     (primary s-open-brac expression s-close-brac)
-                    ('f)
+                    'f
                 )
                 (
                     (primary s-open-par s-close-par)
-                    ('f)
+                    'f
                 )
                 (
                     (primary s-open-par arguments s-close-par)
-                    ('f)
+                    'f
                 )
             )
             (arguments
                 (
                     (expression)
-                    ('f)
+                    'f
                 )
                 (
                     (arguments s-comma expression)
-                    ('f)
+                    'f
                 )
             )
             (atom
@@ -366,15 +366,15 @@
                 )
                 (
                     (a-true)
-                    ('f)
+                    'f
                 )
                 (
                     (a-false)
-                    ('f)
+                    'f
                 )
                 (
                     (a-none)
-                    ('f)
+                    'f
                 )
                 (
                     (a-number)
@@ -382,27 +382,27 @@
                 )
                 (
                     (List)
-                    ('f)
+                    'f
                 )
             )
             (List
                 (
                     (s-open-brac expressions s-close-brac)
-                    ('f)
+                    'f
                 )
                 (
                     (s-open-brac s-close-brac)
-                    ('f)
+                    'f
                 )
             )
             (expressions
                 (
                     (expressions s-comma expression)
-                    ('f)
+                    'f
                 )
                 (
                     (expression)
-                    ('f)
+                    'f
                 )
             )
         )
@@ -411,7 +411,7 @@
 
 ;test
 (define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2")))
+(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2;")))
 (simple-math-parser my-lexer)
 ;(let ((parser-res (simple-math-parser my-lexer))) parser-res)
 
