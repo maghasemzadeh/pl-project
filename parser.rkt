@@ -426,13 +426,6 @@
 (define init-env
   (lambda () (empty-env)))
 
-;test
-(define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2; b = a;")))
-;(simple-math-parser my-lexer)
-(define parser-res (simple-math-parser my-lexer))
-parser-res
-
 (define run
   (lambda (program)
     (value-of-program program)))
@@ -578,6 +571,9 @@ parser-res
 
 
 
-
-
+;test
+(define lex-this (lambda (lexer input) (lambda () (lexer input))))
+(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2; b = a; c = a + b;")))
+;(simple-math-parser my-lexer)
+(define parser-res (simple-math-parser my-lexer))
 (run parser-res)
