@@ -323,7 +323,7 @@
             (param-with-default
                 ((identifier s-assign expression) (a-param-with-default $1 $3)))
             (if-stmt
-                ((kw-if expression s-colon statements else-block) (an-if-stmt $2 $4)))
+                ((kw-if expression s-colon statements else-block) (an-if-stmt $2 $4 $5)))
             (else-block
                 ((kw-else s-colon statements) (an-else-block $3)))
             (for-stmt
@@ -450,9 +450,29 @@
     (lambda (stmt env)
         (cases statement stmt
             (stmt-compound-stmt (stmtt)
-                'f)
+                (value-of-stmt-compound-stmt stmtt env))
             (stmt-simple-stmt (stmtt)
                 (value-of-simple-stmt stmtt env)))))
+
+(define value-of-stmt-compound-stmt
+  (lambda (compund-statement env)
+    (cases compound-stmt compund-statement
+      (compound-stmt-function-def (stmt)
+                                  (compound-stmt-function-def stmt env)
+                                  )
+      (compound-stmt-if-stmt (stmt)
+                             (value-of-if-stmt stmt env)
+                             )
+      (compound-stmt-for-stmt (stmt)
+                              (value-of-for-stmt stmt env)
+                              )
+      )
+    )
+ )
+
+(define value-of-for-stmt
+  'f
+  )
 
 (define value-of-simple-stmt 
     (lambda (stmt env)
@@ -522,6 +542,28 @@
                 (- (value-of-sum exp1 env) (value-of-term exp2 env)))
             (a-term-sum (exp)
                 (value-of-term exp env)))))
+
+(define (convert-to-bool param)
+    (cond
+      [(list? param) (not (empty? param))]
+      [(boolean? param) param]
+      [(number? param) (not (equal? param 0))]
+      )
+    )
+
+(define value-of-if-stmt
+    (lambda (expr env)
+        (cases if-stmt expr
+            (an-if-stmt (exp1 stmts else-block)  
+                (if (value-of-expression exp1 env) (value-of-stmts stmts env) (value-of-else-block else-block env))
+                ))))
+
+(define value-of-else-block
+    (lambda (expr env)
+        (cases else-block expr
+            (an-else-block (stmts)
+                (value-of-stmts stmts env)
+                ))))
 
 (define value-of-term 
     (lambda (expr env)
