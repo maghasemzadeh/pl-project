@@ -66,8 +66,8 @@
     (a-stmt
         (stmt statement?))
     (a-stmts
-        (stmt statement?)
-        (stmts statements?)))
+        (stmts statements?)
+        (stmt statement?)))
 
 (define-datatype statement statement?
     (stmt-compound-stmt
@@ -119,10 +119,10 @@
 
 (define-datatype params params?
     (a-param 
-        (params params-with-default?)
+        (params params-with-default?))
     (a-params
-        (params params?)
-        (param params-with-default?))))
+        (params-exp params?)
+        (param-exp params-with-default?)))
 
 (define-datatype params-with-default params-with-default?
     (a-param-with-default
@@ -135,6 +135,15 @@
         (stmts statements?)
         (else-block else-block?)))
 
+(define-datatype else-block else-block?
+    (an-else-block
+        (stmts statements?)))
+
+(define-datatype for-stmt for-stmt?
+    (a-for-stmt 
+        (id symbol?)
+        (exp expression?)
+        (stmts statements?)))
 
 (define-datatype expression expression?
     (an-expression
@@ -142,20 +151,20 @@
 
 (define-datatype disjunction-exp disjunction-exp?
     (a-cnj-disj
-        (exp conjunction?))
-    (disjunction-or-conjuction
-        (dis-exp disjunction?)
-        (con-exp conjunction?)))
+        (exp conjunction-exp?))
+    (or-exp
+        (dis-exp disjunction-exp?)
+        (con-exp conjunction-exp?)))
 
-(define-datatype conjuction-exp conjuction-exp?
+(define-datatype conjunction-exp conjunction-exp?
     (an-inv-conj
-        (exp inversion?))
-    (conjuction-and-inversion
-        (con-exp conjunction?)
-        (inv-exp inversion?)))
+        (exp inversion-exp?))
+    (and-exp
+        (con-exp conjunction-exp?)
+        (inv-exp inversion-exp?)))
 
 (define-datatype inversion-exp inversion-exp?
-    (not-inversion
+    (not-exp
         (inv-exp inversion-exp?))
     (a-comparison-inv
         (cmp-exp comparison-exp?)))
@@ -175,23 +184,23 @@
         (exp2 cmp-op-sum-pair-exp?)))
 
 (define-datatype cmp-op-sum-pair-exp cmp-op-sum-pair-exp?
-    (an-eq-sum-cmp
+    (eq-sum-cmp
         (exp eq-sum-exp?))
-    (an-lt-sum-cmp 
+    (lt-sum-cmp 
         (exp lt-sum-exp?))
-    (a-gt-sum-cmp 
+    (gt-sum-cmp 
         (exp gt-sum-exp?)))
 
 (define-datatype eq-sum-exp eq-sum-exp?
-    (an-eq-sum 
+    (a-eq
         (exp sum-exp?)))
 
 (define-datatype lt-sum-exp lt-sum-exp?
-    (an-lt-sum 
+    (a-lt
         (exp sum-exp?)))
 
 (define-datatype gt-sum-exp gt-sum-exp?
-    (a-gt-sum 
+    (a-gt
         (exp sum-exp?)))
 
 (define-datatype sum-exp sum-exp?
@@ -207,19 +216,26 @@
 (define-datatype term-exp term-exp?
     (a-mul-term 
         (exp1 term-exp?)
-        (exp2 factor-exp?)
+        (exp2 factor-exp?))
     (a-div-term 
         (exp1 term-exp?)
-        (exp2 factor-exp?)))
+        (exp2 factor-exp?))
     (a-term
-        (exp term-exp?)))
+        (exp factor-exp?)))
 
 (define-datatype factor-exp factor-exp?
     (a-plus-factor 
         (exp factor-exp?))
     (a-minus-factor 
         (exp factor-exp?))
-    (a-primary-factor 
+    (a-power-factor 
+        (exp power-exp?)))
+
+(define-datatype power-exp power-exp?
+    (a-power
+        (atom atom-exp?)
+        (factor factor-exp?))
+    (a-primary-power
         (exp primary-exp?)))
 
 (define-datatype primary-exp primary-exp?
@@ -245,7 +261,7 @@
     (id-atom
         (id symbol?))
     (bool-atom
-        (val bool?))
+        (val boolean?))
     (none-atom)
     (num-atom
         (val number?))
@@ -254,8 +270,9 @@
 
 (define-datatype list-exp list-exp?
     (a-list
-        (exps expressions?)
-    (empty-list)))    
+        (exps expressions?))
+    (empty-list))
+
 (define-datatype expressions expressions?
     (a-exps
         (exps expressions?)
@@ -271,109 +288,107 @@
         (error void)
         (tokens a b)
         (grammar
-(statements
-    ((statement s-semicolon) $1)
-    ((statements statement s-semicolon) (cons $1 $2)))
-(statement
-    ((compound-stmt) $1)
-    ((simple-stmt) $1))
-(simple-stmt
-    ((assignment) $1)
-    ((return-stmt) $1)
-    ((global-stmt) $1)
-    ((kw-pass) (kw-pass-exp))
-    ((kw-break) (kw-break-exp))
-    ((kw-continue)(kw-continue-exp)))
-(compound-stmt
-    ((function-def) $1)
-    ((if-stmt) $1)
-    ((for-stmt) $1))
-(assignment
-    ((identifier s-assign expression) (assingment-exp $1 $3)))
-(return-stmt
-    (
-(kw-return) (kw-return-exp))
-    ((kw-return expression) (return-exp)))
-(global-stmt
-    ((kw-global identifier) (global-exp $2)))
-(function-def
-    ((kw-def identifier s-open-par params s-close-par s-colon statements) (def-exp $2 $4 $7))
-    ((kw-def identifier s-open-par s-close-par s-colon statements) (empty-def-exp $2 $6)))
-(params
-    ((param-with-default) $1)
-    ((params s-comma param-with-default) (param-comma-exp $1 $3)))
-(param-with-default
-    ((identifier s-assign expression) (assign-exp $1 $3)))
-(if-stmt
-    ((kw-if expression s-colon statements else-block) (if-exp $2 $4)))
-(else-block
-    ((kw-else s-colon statements) (else-exp $3)))
-(for-stmt
-    ((kw-for identifier kw-in expression s-colon statements) (for-exp $2 $4 $6)))
-(expression
-    ((disjunction) $1))
-(disjunction
-    ((conjunction) $1)
-    ((disjunction kw-or conjunction) (or-exp $1 $3)))
-(conjunction
-    ((inversion) $1)
-    ((conjunction kw-and inversion) (and-exp $1 $3)))
-(inversion
-    ((kw-not inversion) (not-exp $2))
-    ((comparison) $1))
-(comparison
-    ((sum compare-op-sum-pairs) (sum-compare-exp $1 $2))
-    ((sum) $1))
-(compare-op-sum-pairs
-    ((compare-op-sum-pair) $1)
-    ((compare-op-sum-pairs compare-op-sum-pair) (multi-compare-exp $2)))
-(compare-op-sum-pair
-    ((eq-sum) $1)
-    ((lt-sum) $1)
-    ((gt-sum) $1))
-(eq-sum
-    ((s-eq sum) (eq-exp $2)))
-(lt-sum
-    ((s-lt sum) (lt-exp $2)))
-(gt-sum
-    ((s-gt sum) (gt-exp $2)))
-(sum
-    ((sum s-plus term) (sum-exp $1 $3))
-    ((sum s-minus term) (minus-exp $1 $3))
-    ((term) $1))
-(term
-    ((term s-mult factor) (mul-exp $1 $3))
-    ((term s-div factor) (div-exp $1 $3))
-    ((factor) $1))
-(factor
-    ((s-plus factor) (pos-num-exp $2))
-    ((s-minus factor) (neg-num-exp $2))
-    ((power) $1))
-(power
-    ((atom s-pow factor) (pow-exp $1 $3))
-    ((primary) $1))
-(primary
-    ((atom) $1)
-    ((primary s-open-brac expression s-close-brac) (array-peak-exp $1 $3))
-    (
-(primary s-open-par s-close-par) (call-exp $1))
-    ((primary s-open-par arguments s-close-par) (call-arg-exp $1 $3)))
-(arguments
-    ((expression) $1)
-    ((arguments s-comma expression) (arg-exp-exp $1 $3)))
-(atom
-    ((identifier) (id-exp $1))
-    ((a-true) (bool-exp 'f))
-    ((a-false) (bool-exp 'f))
-    ((a-none) (none-exp))
-    ((a-number) (num-exp $1))
-    ((List) $1))
-(List
-    ((s-open-brac expressions s-close-brac) (bracket-exp $2))
-    ((s-open-brac s-close-brac) (empty-bracket-exp)))
-(expressions
-    ((expressions s-comma expression) (comma-exp $1 $3))
-    ((expression) $1)))))
+            (statements
+                ((statement s-semicolon) (a-stmt $1))
+                ((statements statement s-semicolon) (a-stmts $1 $2)))
+            (statement
+                ((compound-stmt) (stmt-compound-stmt $1))
+                ((simple-stmt) (stmt-simple-stmt $1)))
+            (simple-stmt
+                ((assignment) (simple-stmt-assignment $1))
+                ((return-stmt) (simple-stmt-return-stmt $1))
+                ((global-stmt) (simple-stmt-global-stmt $1))
+                ((kw-pass) (simple-stmt-pass))
+                ((kw-break) (simple-stmt-break))
+                ((kw-continue) (simple-stmt-continue)))
+            (compound-stmt
+                ((function-def) (compound-stmt-function-def $1))
+                ((if-stmt) (compound-stmt-if-stmt $1))
+                ((for-stmt) (compound-stmt-for-stmt $1)))
+            (assignment
+                ((identifier s-assign expression) (an-assignment-stmt $1 $3)))
+            (return-stmt
+                ((kw-return) (void-return-stmt))
+                ((kw-return expression) (value-return-stmt $2)))
+            (global-stmt
+                ((kw-global identifier) (a-global-stmt $2)))
+            (function-def
+                ((kw-def identifier s-open-par params s-close-par s-colon statements) (function-def-with-params $2 $4 $7))
+                ((kw-def identifier s-open-par s-close-par s-colon statements) (funcion-def-without-params $2 $6)))
+            (params
+                ((param-with-default) (a-param $1))
+                ((params s-comma param-with-default) (a-params $1 $3)))
+            (param-with-default
+                ((identifier s-assign expression) (a-param-with-default $1 $3)))
+            (if-stmt
+                ((kw-if expression s-colon statements else-block) (an-if-stmt $2 $4)))
+            (else-block
+                ((kw-else s-colon statements) (an-else-block $3)))
+            (for-stmt
+                ((kw-for identifier kw-in expression s-colon statements) (a-for-stmt $2 $4 $6)))
+            (expression
+                ((disjunction) (an-expression $1)))
+            (disjunction
+                ((conjunction) (a-cnj-disj $1))
+                ((disjunction kw-or conjunction) (or-exp $1 $3)))
+            (conjunction
+                ((inversion) (an-inv-conj $1))
+                ((conjunction kw-and inversion) (and-exp $1 $3)))
+            (inversion
+                ((kw-not inversion) (not-exp $2))
+                ((comparison) (a-comparison-inv $1)))
+            (comparison
+                ((sum compare-op-sum-pairs) (a-cmp-op-sum-pairs-comparison $1 $2))
+                ((sum) (a-sum-comparison $1)))
+            (compare-op-sum-pairs
+                ((compare-op-sum-pair) (a-pair-cmp-op-sum-pairs $1))
+                ((compare-op-sum-pairs compare-op-sum-pair) (a-cmp-op-sum-pairs $1 $2)))
+            (compare-op-sum-pair
+                ((eq-sum) (eq-sum-cmp $1))
+                ((lt-sum) (lt-sum-cmp $1))
+                ((gt-sum) (gt-sum-cmp $1)))
+            (eq-sum
+                ((s-eq sum) (a-eq $2)))
+            (lt-sum
+                ((s-lt sum) (a-lt $2)))
+            (gt-sum
+                ((s-gt sum) (a-gt $2)))
+            (sum
+                ((sum s-plus term) (a-sum $1 $3))
+                ((sum s-minus term) (a-minus $1 $3))
+                ((term) (a-term-sum $1)))
+            (term
+                ((term s-mult factor) (a-mul-term $1 $3))
+                ((term s-div factor) (a-div-term $1 $3))
+                ((factor) (a-term $1)))
+            (factor
+                ((s-plus factor) (a-plus-factor $2))
+                ((s-minus factor) (a-minus-factor $2))
+                ((power) (a-power-factor $1)))
+            (power
+                ((atom s-pow factor) (a-power $1 $3))
+                ((primary) (a-primary-power $1)))
+            (primary
+                ((atom) (an-atom-primary $1))
+                ((primary s-open-brac expression s-close-brac) (an-array-primary $1 $3))
+                ((primary s-open-par s-close-par) (a-callable-primary $1))
+                ((primary s-open-par arguments s-close-par) (a-callable-primary-with-args $1 $3)))
+            (arguments
+                ((expression) (argument $1))
+                ((arguments s-comma expression) (arguments $1 $3)))
+            (atom
+                ((identifier) (id-atom $1))
+                ((a-true) (bool-atom true))
+                ((a-false) (bool-atom false))
+                ((a-none) (none-atom))
+                ((a-number) (num-atom $1))
+                ((List) (list-atom $1)))
+            (List
+                ((s-open-brac expressions s-close-brac) (a-list $2))
+                ((s-open-brac s-close-brac) (empty-list)))
+            (expressions
+                ((expressions s-comma expression) (a-exps $1 $3))
+                ((expression) (a-exp $1))))))
 
 ;test
 (define lex-this (lambda (lexer input) (lambda () (lexer input))))
