@@ -444,22 +444,140 @@ parser-res
         (value-of-stmts stmts (init-env))))))
 
 (define value-of-stmts
-  (lambda (stmts env)
-    (cases  statements stmts
-      (a-stmt (stmt)
-              (value-of-stmt stmt env))
-      (a-stmts (stmts stmt)
-               (let ((new-env (value-of-stmts stmts env)))
-                 (value-of-stmt stmt new-env))))))
+    (lambda (stmts env)
+        (cases  statements stmts
+            (a-stmt (stmt)
+                (value-of-stmt stmt env))
+            (a-stmts (stmts stmt)
+                (let ((new-env (value-of-stmts stmts env)))
+                    (value-of-stmt stmt new-env))))))
 
 
 (define value-of-stmt
-  (lambda (stmt env)
-    (cases statement stmt
-      (stmt-compound-stmt (stmt)
-                (print 'a))
-      (stmt-simple-stmt (stmt)
-                (print 'b)))))
+    (lambda (stmt env)
+        (cases statement stmt
+            (stmt-compound-stmt (stmtt)
+                'f)
+            (stmt-simple-stmt (stmtt)
+                (value-of-simple-stmt stmtt env)))))
+
+(define value-of-simple-stmt 
+    (lambda (stmt env)
+        (cases simple-stmt stmt
+            (simple-stmt-assignment (stmtt)
+                (value-of-assignment stmtt env))
+            (simple-stmt-return-stmt (stmtt) 'f)
+            (simple-stmt-global-stmt (stmtt) 'f)
+            (simple-stmt-pass () 'f)
+            (simple-stmt-break () 'f)
+            (simple-stmt-continue () 'f))))
+
+
+
+(define value-of-assignment 
+    (lambda (ass env)
+        (cases assignment-stmt ass
+            (an-assignment-stmt (id exp) 
+                (let ((exp-val (value-of-expression exp env)))
+                    (extend-env id exp-val env))))))
+(define value-of-expression 
+    (lambda (expr env)  
+        (cases expression expr
+            (an-expression (exp)  
+                (value-of-disjunction exp env)))))
+
+(define value-of-disjunction
+    (lambda (expr env)
+        (cases disjunction-exp expr
+            (a-cnj-disj (exp)   
+                (value-of-conjunction exp env))
+            (or-exp (dis-exp con-exp)
+                ('f)))))
+
+
+(define value-of-conjunction
+    (lambda (expr env)
+        (cases conjunction-exp expr
+            (an-inv-conj (exp)   
+                (value-of-inversion exp env))
+            (and-exp (con-exp inv-exp)
+                ('f)))))
+
+
+(define value-of-inversion
+    (lambda (expr env)
+        (cases inversion-exp expr
+            (not-exp (exp)   
+                (not (value-of-inversion exp env)))
+            (a-comparison-inv (exp)
+                (value-of-comparison exp env)))))
+
+(define value-of-comparison
+    (lambda (expr env)
+        (cases comparison-exp expr
+            (a-sum-comparison (exp)
+                (value-of-sum exp env))
+            (a-cmp-op-sum-pairs-comparison (exp1 exp2) ('f)))))
+(define value-of-sum 
+    (lambda (expr env)
+        (cases sum-exp expr
+            (a-sum (exp1 exp2)  
+                (+ (value-of-sum exp1 env) (value-of-term exp2 env)))
+            (a-minus (exp1 exp2)  
+                (- (value-of-sum exp1 env) (value-of-term exp2 env)))
+            (a-term-sum (exp)
+                (value-of-term exp env)))))
+
+(define value-of-term 
+    (lambda (expr env)
+        (cases term-exp expr
+            (a-mul-term (exp1 exp2)
+                (* (value-of-term exp1 env) (value-of-factor exp2 env)))
+            (a-div-term (exp1 exp2)
+                (/ (value-of-term exp1 env) (value-of-factor exp2 env)))
+            (a-term (exp)
+                (value-of-factor exp env)))))
+
+
+(define value-of-factor 
+    (lambda (expr env)
+        (cases factor-exp expr
+            (a-plus-factor (exp)
+                (value-of-factor exp env))
+            (a-minus-factor (exp)
+                (- 0 (value-of-factor exp env)))
+            (a-power-factor (exp)
+                (value-of-power exp env)))))
+            
+
+(define value-of-power 
+    (lambda (expr env) 
+        (cases power-exp expr
+            (a-power (atom factor)
+                (expt (value-of-atom atom env) (value-of-factor factor env)))
+            (a-primary-power (exp)
+                (value-of-primary exp env)))))
+(define value-of-primary 
+    (lambda (expr env)
+        (cases primary-exp expr
+            (an-atom-primary (exp)
+                (value-of-atom exp env))
+            (an-array-primary (prim exp) 'f)
+            (a-callable-primary (prim) 'f)
+            (a-callable-primary-with-args (prim args) 'f))))
+
+(define value-of-atom  
+    (lambda (expr env)
+        (cases atom-exp expr
+            (id-atom (id)
+                (apply-env env id))
+            (bool-atom (val) val)
+            (none-atom () null)
+            (num-atom (val) val)
+            (list-atom (val) 'f))))
+
+
+
 
 
 (run parser-res)
