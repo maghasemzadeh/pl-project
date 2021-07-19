@@ -58,6 +58,7 @@
     s-colon s-comma kw-if kw-else kw-for kw-in kw-or kw-and kw-not s-eq s-lt s-gt s-lte s-gte s-plus s-minus s-mult s-div 
     s-pow s-plus-assign s-minus-assign s-mult-assign s-div-assign s-pow-assign s-open-brac s-close-brac a-true a-false a-none
 ))
+
 (define-datatype program program?
   (a-program
    (prgrm-stmts statements?)))
@@ -280,14 +281,15 @@
     (a-exp
         (exp expression?)))
 
-
 (define simple-math-parser
     (parser
-        (start statements)
+        (start program)
         (end EOF)
         (error void)
         (tokens a b)
         (grammar
+            (program
+                ((statements) (a-program $1)))
             (statements
                 ((statement s-semicolon) (a-stmt $1))
                 ((statements statement s-semicolon) (a-stmts $1 $2)))
@@ -390,9 +392,74 @@
                 ((expressions s-comma expression) (a-exps $1 $3))
                 ((expression) (a-exp $1))))))
 
+(define empty-env
+  (lambda () '()))
+
+(define extend-env
+  (lambda (var val env)
+    (cons (cons var val) env)))
+
+(define apply-env
+  (lambda (initial-env search-var)
+    (letrec ((loop (lambda (env)
+                     (cond ((null? env)
+                            (report-no-binding-found search-var initial-env))
+                           ((and (pair? env) (pair? (car env)))
+                            (let ((saved-var (caar env))
+                                  (saved-val (cdar env))
+                                  (saved-env (cdr env)))
+                              (if (eqv? search-var saved-var)
+                                  saved-val
+                                  (loop saved-env))))
+                           (else
+                            (report-invalid-env initial-env))))))
+      (loop initial-env))))
+
+(define report-no-binding-found
+  (lambda (search-var env)
+    (eopl:error 'apply-env "No binding for ~s in ~s" search-var env)))
+
+(define report-invalid-env
+  (lambda (env)
+    (eopl:error 'apply-env "Bad environment ~s" env)))
+
+(define init-env
+  (lambda () (empty-env)))
+
 ;test
 (define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2;")))
+(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2; b = a;")))
 ;(simple-math-parser my-lexer)
 (define parser-res (simple-math-parser my-lexer))
+parser-res
 
+(define run
+  (lambda (program)
+    (value-of-program program)))
+
+(define value-of-program
+  (lambda (pgm)
+    (cases program pgm
+      (a-program (stmts)
+        (value-of-stmts stmts (init-env))))))
+
+(define value-of-stmts
+  (lambda (stmts env)
+    (cases  statements stmts
+      (a-stmt (stmt)
+              (value-of-stmt stmt env))
+      (a-stmts (stmts stmt)
+               (let ((new-env (value-of-stmts stmts env)))
+                 (value-of-stmt stmt new-env))))))
+
+
+(define value-of-stmt
+  (lambda (stmt env)
+    (cases statement stmt
+      (stmt-compound-stmt (stmt)
+                (print 'a))
+      (stmt-simple-stmt (stmt)
+                (print 'b)))))
+
+
+(run parser-res)
