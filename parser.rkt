@@ -461,7 +461,7 @@
                 (value-of-assignment stmtt env))
             (simple-stmt-return-stmt (stmtt) 'f)
             (simple-stmt-global-stmt (stmtt) 'f)
-            (simple-stmt-pass () 'f)
+            (simple-stmt-pass () env)
             (simple-stmt-break () 'f)
             (simple-stmt-continue () 'f))))
 
@@ -485,7 +485,7 @@
             (a-cnj-disj (exp)   
                 (value-of-conjunction exp env))
             (or-exp (dis-exp con-exp)
-                ('f)))))
+                (or (value-of-disjunction dis-exp env) (value-of-conjunction con-exp env))))))
 
 
 (define value-of-conjunction
@@ -494,7 +494,7 @@
             (an-inv-conj (exp)   
                 (value-of-inversion exp env))
             (and-exp (con-exp inv-exp)
-                ('f)))))
+                (and (value-of-conjunction con-exp env) (value-of-inversion exp env))))))
 
 
 (define value-of-inversion
@@ -511,6 +511,8 @@
             (a-sum-comparison (exp)
                 (value-of-sum exp env))
             (a-cmp-op-sum-pairs-comparison (exp1 exp2) ('f)))))
+
+
 (define value-of-sum 
     (lambda (expr env)
         (cases sum-exp expr
@@ -573,7 +575,10 @@
 
 ;test
 (define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2; b = a; c = a + b;")))
+;(define my-lexer (lex-this simple-math-lexer (open-input-string "a = 2; b = a; c = a + b;")))
 ;(simple-math-parser my-lexer)
-(define parser-res (simple-math-parser my-lexer))
-(run parser-res)
+;(define parser-res (simple-math-parser my-lexer))
+(define evaluate
+  (lambda (path)
+     (run (simple-math-parser (lex-this simple-math-lexer (open-input-string (file->string (string->path path))))))))
+(evaluate "test.txt")
