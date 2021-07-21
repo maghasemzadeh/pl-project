@@ -14,6 +14,7 @@
    ("continue" (token-kw-continue))
    ("=" (token-s-assign))
    ("return" (token-kw-return))
+   ("print" (token-kw-print))
    ("global" (token-kw-global))
    ("def" (token-kw-def))
    ("(" (token-s-open-par))
@@ -54,7 +55,7 @@
 
 (define-tokens a (identifier a-number))
 (define-empty-tokens b (
-                        EOF s-semicolon kw-pass kw-break kw-continue s-assign kw-return kw-global kw-def s-open-par s-close-par 
+                        EOF s-semicolon kw-print kw-pass kw-break kw-continue s-assign kw-return kw-global kw-def s-open-par s-close-par 
                             s-colon s-comma kw-if kw-else kw-for kw-in kw-or kw-and kw-not s-eq s-lt s-gt s-lte s-gte s-plus s-minus s-mult s-div 
                             s-pow s-plus-assign s-minus-assign s-mult-assign s-div-assign s-pow-assign s-open-brac s-close-brac a-true a-false a-none
                             ))
@@ -83,6 +84,8 @@
    (stmt return-stmt?))
   (simple-stmt-global-stmt
    (stmt global-stmt?))
+  (simple-stmt-print-stmt 
+   (stmt print-stmt?))
   (simple-stmt-pass)
   (simple-stmt-break)
   (simple-stmt-continue))
@@ -108,6 +111,10 @@
 (define-datatype global-stmt global-stmt?
   (a-global-stmt 
    (id symbol?)))
+
+(define-datatype print-stmt print-stmt?
+  (a-print-stmt 
+   (expression expression?)))
 
 (define-datatype function-def function-def?
   (function-def-with-params
@@ -300,6 +307,7 @@
                 ((assignment) (simple-stmt-assignment $1))
                 ((return-stmt) (simple-stmt-return-stmt $1))
                 ((global-stmt) (simple-stmt-global-stmt $1))
+                ((print-stmt) (simple-stmt-print-stmt $1))
                 ((kw-pass) (simple-stmt-pass))
                 ((kw-break) (simple-stmt-break))
                 ((kw-continue) (simple-stmt-continue)))
@@ -314,6 +322,8 @@
                 ((kw-return expression) (value-return-stmt $2)))
             (global-stmt
                 ((kw-global identifier) (a-global-stmt $2)))
+            (print-stmt 
+                ((kw-print expression) (a-print-stmt $2)))
             (function-def
                 ((kw-def identifier s-open-par params s-close-par s-colon statements) (function-def-with-params $2 $4 $7))
                 ((kw-def identifier s-open-par s-close-par s-colon statements) (funcion-def-without-params $2 $6)))
@@ -481,10 +491,19 @@
                               (value-of-assignment stmtt env))
       (simple-stmt-return-stmt (stmtt) 'f)
       (simple-stmt-global-stmt (stmtt) 'f)
+      (simple-stmt-print-stmt (stmt) (value-of-print-stmt stmt env))
       (simple-stmt-pass () env)
       (simple-stmt-break () 'f)
       (simple-stmt-continue () 'f))))
 
+(define value-of-print-stmt 
+    (lambda (stmt env)
+        (cases print-stmt stmt
+            (a-print-stmt (exp)
+                (begin
+                    (display (value-of-expression exp env))
+                    (display "\n")
+                    env)))))
 
 
 (define value-of-assignment 
